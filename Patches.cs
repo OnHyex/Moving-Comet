@@ -19,7 +19,7 @@ namespace Moving_Comet
         {
             static void Prefix()
             {
-                Messaging.Echo(PLNetworkManager.Instance.LocalPlayer, "CPEI_handle sync");
+                //Messaging.Echo(PLNetworkManager.Instance.LocalPlayer, "CPEI_handle sync");
                 PLSectorInfo CometSector = PLGlobal.Instance.Galaxy.GetSectorOfVisualIndication(ESectorVisualIndication.COMET);
                 if (CometInitial == null)
                 {
@@ -58,7 +58,7 @@ namespace Moving_Comet
                 }
                 if (Mod.Instance.IsEnabled() || PhotonNetwork.isMasterClient)
                 {
-                    Messaging.Echo(PLNetworkManager.Instance.LocalPlayer, "client Recieved updated sector position");
+                    //Messaging.Echo(PLNetworkManager.Instance.LocalPlayer, "client Recieved updated sector position");
                     //Syncing every jump to prevent floating point errors from deviating clients from server
                     PLShipInfo plshipInfo = PLEncounterManager.Instance.PlayerShip;
                     if (PLAcademyShipInfo.Instance != null)
@@ -114,16 +114,16 @@ namespace Moving_Comet
                 }
             }
         }
-        [HarmonyPatch(typeof(PLServer), "NetworkBeginWarp")]
-        internal class PLServerPatch2
-        {
-            static void Prefix()
-            {
-                Messaging.Echo(PLNetworkManager.Instance.LocalPlayer, "network begin warp");
-                //Has the pathing update properly for the different campaigns/tutorial
+        //[HarmonyPatch(typeof(PLServer), "NetworkBeginWarp")]
+        //internal class PLServerPatch2
+        //{
+        //    static void Prefix()
+        //    {
+        //        Messaging.Echo(PLNetworkManager.Instance.LocalPlayer, "network begin warp");
+        //        //Has the pathing update properly for the different campaigns/tutorial
                 
-            }
-        }
+        //    }
+        //}
         //[HarmonyPatch(typeof(PLGalaxy), "Setup")] //Uneeded as during saving and loading the galaxy is saved and loaded from the previous state so I don't have to adjust it on load
         //internal class PLGalaxyPatch
         //{
