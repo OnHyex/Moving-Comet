@@ -12,7 +12,31 @@ namespace Moving_Comet
 {
     internal class Patches
     {
-        internal static PLSectorInfo CometInitial;
+        private static Vector3 CalcNextPosition()
+        {
+            if (ModGUI.Mode < 5)
+            {
+                numJumps++;
+                int AdjustmentFactor = numJumps;
+                Vector2 distance = new Vector2(((Vector3)CometInitial).x, ((Vector3)CometInitial).y);
+                float mag = distance.magnitude;
+                float initialAngle = Mathf.Atan2(distance.y, distance.x);
+                float Divisor = 50f * Mathf.Pow(2, (ModGUI.Mode / 2 + 1)) * (Mathf.Pow(mag, (1/3)));
+                return new Vector3(mag * Mathf.Cos(initialAngle + (2 * Mathf.PI * (AdjustmentFactor / Divisor))), mag * Mathf.Sin(initialAngle + (2 * Mathf.PI * (AdjustmentFactor / Divisor))), ((Vector3)CometInitial).z);
+            } 
+            else
+            {
+                numJumps++;
+                float GalaxyScale = PLGlobal.Instance.Galaxy.CalculateGenGalaxyScaleFromGenSettings();
+                PLRand randomizer = new PLRand(numJumps + PLGlobal.Instance.Galaxy.GenerationSettings.CustomSeed);
+                UnityEngine.Random.Range(GalaxyScale * -1, GalaxyScale);
+                float radius = UnityEngine.Random.Range(0, GalaxyScale);
+                Vector2 vector = new Vector2(UnityEngine.Random.Range(GalaxyScale * -1, GalaxyScale), UnityEngine.Random.Range(GalaxyScale * -1, GalaxyScale));
+                vector.Normalize();
+                return new Vector3(radius * vector.x, radius * vector.y, ((Vector3)CometInitial).z);
+            }
+        }
+        internal static object CometInitial;
         internal static int numJumps = 0;
         [HarmonyPatch(typeof(PLServer), "CPEI_HandleActivateWarpDrive")]
         internal class PLServerPatch1
@@ -23,21 +47,16 @@ namespace Moving_Comet
                 PLSectorInfo CometSector = PLGlobal.Instance.Galaxy.GetSectorOfVisualIndication(ESectorVisualIndication.COMET);
                 if (CometInitial == null)
                 {
-                    CometInitial = CometSector;
+                    CometInitial = CometSector.Position;
                 }
                 if (PhotonNetwork.isMasterClient)
                 {
-                    int AdjustmentFactor;
+
                     //if (!PhotonNetwork.isMasterClient)
                     //{
                     //    CometInitial = CometSector;
                     //}
-                    numJumps++;
-                    AdjustmentFactor = numJumps;
-                    Vector2 distance = new Vector2(CometInitial.Position.x, CometInitial.Position.y);
-                    float mag = distance.magnitude;
-                    float initialAngle = Mathf.Deg2Rad * Mathf.Atan(distance.y / distance.x);
-                    CometSector.Position = new Vector3(mag * Mathf.Cos(initialAngle + (2 * Mathf.PI * (AdjustmentFactor / 60f))), mag * Mathf.Sin(initialAngle + (2 * Mathf.PI * (AdjustmentFactor / 60f))), CometInitial.Position.z);
+                    CometSector.Position = CalcNextPosition();
                     PLServer.Instance.photonView.RPC("ClientUpdateSectorPosition", PhotonTargets.All, new object[] { (short)CometSector.ID, CometSector.Position });
                 }     
             }
@@ -79,7 +98,7 @@ namespace Moving_Comet
                         }
                         if (CometInitial == null)
                         {
-                            CometInitial = CometSector;
+                            CometInitial = CometSector.Position;
                         }
                         //Remove old pathing data that is no longer valid could be optimized to find overlap with new comet position maybe or that might be worse
                         foreach (PLSectorInfo sector in CometSector.Neighbors)
