@@ -12,7 +12,7 @@ namespace Moving_Comet
             Instance = this;
         }
         public static Mod Instance;
-        public override string Version => "1.0.0";
+        public override string Version => "1.2.0";
         public override string Author => "OnHyex";
         public override string ShortDescription => "template description";
         public override string Name => "Moving Comet";

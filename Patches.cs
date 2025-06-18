@@ -21,19 +21,18 @@ namespace Moving_Comet
                 Vector2 distance = new Vector2(((Vector3)CometInitial).x, ((Vector3)CometInitial).y);
                 float mag = distance.magnitude;
                 float initialAngle = Mathf.Atan2(distance.y, distance.x);
-                float Divisor = 50f * Mathf.Pow(2, (ModGUI.Mode / 2 + 1)) * (Mathf.Pow(mag, (1/3)));
+                //60 is base divisor, each mode is slower than the previous non linearly, the mag multiplication is for it being faster than pure radial movement close in and slower further out to keep the speed more even on larger or smaller galaxy sizes
+                float Divisor = 60f * (1f + 0.2f * Mathf.Pow(ModGUI.Mode,1.5f)) * mag;
                 return new Vector3(mag * Mathf.Cos(initialAngle + (2 * Mathf.PI * (AdjustmentFactor / Divisor))), mag * Mathf.Sin(initialAngle + (2 * Mathf.PI * (AdjustmentFactor / Divisor))), ((Vector3)CometInitial).z);
             } 
             else
             {
                 numJumps++;
                 float GalaxyScale = PLGlobal.Instance.Galaxy.CalculateGenGalaxyScaleFromGenSettings();
-                PLRand randomizer = new PLRand(numJumps + PLGlobal.Instance.Galaxy.GenerationSettings.CustomSeed);
                 UnityEngine.Random.Range(GalaxyScale * -1, GalaxyScale);
-                float radius = UnityEngine.Random.Range(0, GalaxyScale);
-                Vector2 vector = new Vector2(UnityEngine.Random.Range(GalaxyScale * -1, GalaxyScale), UnityEngine.Random.Range(GalaxyScale * -1, GalaxyScale));
-                vector.Normalize();
-                return new Vector3(radius * vector.x, radius * vector.y, ((Vector3)CometInitial).z);
+                float radius = GalaxyScale * Mathf.Sqrt(UnityEngine.Random.Range(0f, 1f));
+                float theta = UnityEngine.Random.Range(0f, 1f) * 2 * Mathf.PI;
+                return new Vector3(radius * Mathf.Cos(theta), radius * Mathf.Sin(theta), ((Vector3)CometInitial).z);
             }
         }
         internal static object CometInitial;
@@ -109,15 +108,23 @@ namespace Moving_Comet
                                 PLGlobal.Instance.Galaxy.AllSectorInfos[sector.ID] = sector;
                             }
                         }
-                        //removing comet from old gridcells for pathing data generation
-                        foreach (PLGalaxy.GalaxyGridCell gridCell in Traverse.Create(typeof(PLGlobal)).Field("Instance").Field("Galaxy").Field("GalaxyGridCells").GetValue<Dictionary<uint, PLGalaxy.GalaxyGridCell>>().Values)
+                        //removing comet from old gridcells for pathing data generation 
+                        //uneeded as the method being patched includes a call of recalculategridcell which already does this
+                        //foreach (PLGalaxy.GalaxyGridCell gridCell in Traverse.Create(typeof(PLGlobal)).Field("Instance").Field("Galaxy").Field("GalaxyGridCells").GetValue<Dictionary<uint, PLGalaxy.GalaxyGridCell>>().Values)
+                        //{
+                        //    if (gridCell.SectorsInGridCell.Contains(CometSector))
+                        //    {
+                        //        gridCell.SectorsInGridCell.Remove(CometSector);
+                        //    }
+                        //}
+                        if (CometSector.GridCell != null)
                         {
-                            if (gridCell.SectorsInGridCell.Contains(CometSector))
-                            {
-                                gridCell.SectorsInGridCell.Remove(CometSector);
-                            }
+                            PLGlobal.Instance.Galaxy.RecalculateGridCell(CometSector);
                         }
-                        CometSector.GridCell = null;
+                        else
+                        {
+                            PLGlobal.Instance.Galaxy.GetGridCellForSector(CometSector, true);
+                        }
                         //forcing clients to use the most recent sync data
                         CometSector.Neighbors = PLGlobal.Instance.Galaxy.GridSearch_FindSectorsWithinRange(CometSector.Position, neighborDistance * neighborDistance, CometSector);
                         foreach (PLSectorInfo sector in CometSector.Neighbors)

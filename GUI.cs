@@ -22,6 +22,7 @@ namespace Moving_Comet
         }
         public override void Draw()
         {
+            ModeStorage = Mode.Value;
             GUILayout.BeginArea(new Rect(30, 30, 400, 400));
             GUILayout.BeginHorizontal();
             GUILayout.Box("Modes");
@@ -36,16 +37,6 @@ namespace Moving_Comet
                 }
             }
             GUILayout.EndArea();
-            
-        }
-        public override void OnOpen()
-        {
-            base.OnOpen();
-            ModeStorage = Mode.Value;
-        }
-        public override void OnClose()
-        {
-            base.OnClose();
             if (ModeStorage != Mode.Value)
             {
                 if (PLGlobal.Instance != null && PLGlobal.Instance.Galaxy != null && PLGlobal.Instance.Galaxy.AllSectorInfos.Count > 0)
